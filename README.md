@@ -1,21 +1,21 @@
-# Rotational Dosing System (8051 Assembly)
+# Sistema de Dosagem Rotativa (8051 Assembly)
 
-##Overview
+## Sobre o projeto
 
-This project implements a rotational dosing system using an 8051 microcontroller. The system simulates an industrial mechanism that dispenses a fixed quantity of screws by controlling the rotation of a DC motor.
+  O projeto visa implementar um sistema de dosagem rotativa utilizando um microcontrolador da família 8051. Esse sistema simula o controle de um mecanismo industrial que dispensa uma quantidade fixa de parafusos para serem ensacodos atravez da manipulação de um motor DC. Os requisitos para o projeto são que o dosador deve girar exatamente 10 voltas e deve conter uma medida no caso de travamento, fazendo com que o motor gire no sentido contrário para destravar a linha de produção.
 
-The implementation focuses on low-level embedded programming, emphasizing direct hardware interaction, deterministic control, and efficient use of microcontroller resources through Assembly language.
 
-##Objectives
 
-The main objectives of this project are:
+## Objetivos
 
-*Understanding the internal architecture of the 8051 microcontroller
-*Developing low-level programming skills using Assembly
-*Utilize concepts such as timers, interrupts, and digital I/O
-*Simulate hardware behavior using the EdSim51 environment
+Os principais objetivos para esse projeto são:
 
-##System Description
+* Compreender a arquitetura interna de um microcontrolador 8051
+* Desenvolvimento low level 
+* 
+* Simulate hardware behavior using the EdSim51 environment
+
+## Descrição do sistema
 
 The system controls a motor-driven rotational  with the following behavior:
 
@@ -45,15 +45,15 @@ checkpoint3.asm: Rotation counting using Timer 1 as an event counter
 final.asm: Fully integrated system with interrupts and reset logic
 README.md: Project documentation
 Implementation Details
-Checkpoint 1 – Display and Input
+### <ins>Checkpoint 1 – Display and Input<ins>
 Reading switch inputs
 Mapping numeric values to 7-segment display patterns
 Using DPTR and MOVC to access lookup tables in program memory
-Checkpoint 2 – Direction Control
+### <ins>Checkpoint 2 – Direction Control<ins>
 Monitoring a switch to determine motor direction
 Storing the current state in a flag
 Implementing subroutines for state comparison and direction change
-Checkpoint 3 – Event Counting
+### <ins>Checkpoint 3 – Event Counting<ins>
 Configuring Timer 1 as an external event counter
 Counting pulses corresponding to motor rotations
 Updating the display dynamically

@@ -19,7 +19,7 @@ Os principais objetivos para esse projeto são:
 ### <ins>Checkpoint 1 – Leitura dos botões, acionamento dos LEDs e Display de 7 Segmentos <ins>
 
 
- ```
+ ```assembly
 ORG 0000H
 
 MAIN:
@@ -88,7 +88,7 @@ END
 
 ### <ins>Checkpoint 2 – Controle da direção do motor <ins>
 
-```
+```assembly
 Org 0000h ;Joga a origem do codigo para 0000h
 clr P3.1 ;Seta o motor para rodar em sentido horario por padrao
  
@@ -125,7 +125,8 @@ end
 
 
 ### <ins>Checkpoint 3 – Contagem de voltas com o timer <ins>
-```
+
+```assembly
 ;-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=-=-=-
 ;Bloco 1: Setup
 ;-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=-=-=-

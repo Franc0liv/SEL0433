@@ -19,6 +19,7 @@ Os principais objetivos para esse projeto são:
 
 ### <ins>Checkpoint 1 – Leitura dos botões, acionamento dos LEDs e Display de 7 Segmentos <ins>
 
+Para o primeiro *Checkpoint* desenvolvemos a lógica de uma subrotina de detecção de evento junto da integração do display de 7 segmentos, de modo que o botão pressionado seja apresentado no display através da indexação de uma tabela na memória de dados apontada pelo ponteiro de dados DPTR. 
 
  ```assembly
 ORG 0000H
@@ -85,6 +86,8 @@ END
 
 ### <ins>Checkpoint 2 – Controle da direção do motor <ins>
 
+Para o segundo *Checkpoint* desenvolvemos a lógica do controle de direção do motor DC através de uma chave, nela temos que controle do sentido de rotação é dado pela porta P2.0. Foi feita uma subrotina *Pivo* que verifica constantemente a mundaça de direção do giro através do loop das funções de ciclo horário e ciclo anti-horário.
+
 ```assembly
 Org 0000h
 clr P3.1 
@@ -111,81 +114,144 @@ end
 
 ### <ins>Checkpoint 3 – Contagem de voltas com o timer <ins>
 
+Para o terceiro *Checkpoint* desenvolvemos a lógica para contagem de eventos e atualização contínua do display utilizando o registrador TMOD e o temporizador TR1.
+
 ```assembly
-SJMP Inicio
 
-org 01Bh
+ORG 0000H 
 
-PUSH Acc
-INC 055h 
-MOV A, 055h
-CJNE A, 051h, Ciclo_Normal
-
-ACALL Zerada   
-POP Acc
-RETI
-
-Ciclo_Normal:
-ACALL Display
-POP Acc
-RETI
-
-
-ORG 0033h 
-Inicio:
-MOV 051h,#10 
-
-MOV IE,#88h
-
-CLR P3.4
+CLR P3.4 
 CLR P3.3
 
-MOV TMOD, #060H
-
-MOV TH1, #0FFh
-MOV TL1, TH1
-
+MOV TMOD, #060H  
+MOV R0, #0F6H
+MOV TL1, R0
 SETB TR1
 
-CLR P3.1 
+CLR P3.1
 
 CycHorario:
 MOV DPTR, #TAB_H
-ACALL Zerada 
 Loop_Horario:
+JB TF1, Overflow
 JNB P2.0,reverso
+ACALL Display
 SJMP Loop_Horario
 
 CycAHorario:
 MOV DPTR, #TAB_AH
-ACALL Zerada
 Loop_AHorario:
+JB TF1, Overflow
 JB P2.0, reverso
+ACALL Display
 SJMP Loop_AHorario
+
+Overflow: 
+CLR TF1
+ACALL Zerada
+SJMP Retorno
 
 Reverso:
 CPL P3.1
 CPL P3.0
+ACALL Zerada
+
+Retorno:
 JNB P3.1, CycHorario
 SJMP CycAHorario
 
 Zerada:
-MOV 55h, #0 
+MOV TL1, R0 
 
+DISPLAY:
+MOV A,TL1
+SUBB A, R0
+MOVC A, @A+DPTR   
+MOV P1, A         
+RET
+
+TAB_H:
+DB 0C0h, 0F9h, 0A4h, 0B0h, 099h, 092h, 082h, 0F8h, 080h, 098h  
+
+TAB_AH: 
+DB 040h, 079h, 024h, 030h, 019h, 012h, 002h, 078h, 000h, 018h  
+
+END
+
+```
+## <ins>Entrega Final – Integração da mudança de direção <ins>
+
+
+```assembly
+
+SJMP Inicializacao
+
+org 01Bh
+INC 055h
+MOV A, 055h
+CJNE A, 051h, Display
+MOV 055h, #0
 Display:
 MOV A, 55h
 MOVC A, @A+DPTR
 MOV P1, A    
-RET
+RETI
+
+ORG 0033h 
+
+Inicializacao:
+MOV 051h,#10 
+MOV IE,#88h
+CLR P3.4
+CLR P3.3
+MOV TMOD, #060H
+MOV TH1, #0FFh
+MOV TL1, TH1
+SETB TR1
+CLR P3.1
+
+CycHorario:
+MOV DPTR, #TAB_H
+MOV 055h, #0
+ACALL Display 
+Loop_Horario:
+JNB P2.7, Panic
+JNB P2.0,Reverso
+SJMP Loop_Horario
+
+CycAHorario:
+MOV DPTR, #TAB_AH
+MOV 055h, #0
+ACALL Display
+Loop_AHorario:
+JNB P2.7, Panic
+JB P2.0, Reverso
+SJMP Loop_AHorario
+
+Reverso:
+JNB P2.7, Panic
+CPL P3.1
+CPL P3.0
+Retorno:
+JNB P3.1, CycHorario
+SJMP CycAHorario
+
+Panic:
+CPL P3.1
+MOV P1, #10001100b
+Loop_Panic:
+JB P2.7, Panic_Finish
+SJMP Loop_Panic
+Panic_Finish:
+MOV P1, #0FFh
+CPL P3.1
+SJMP Retorno
 
 TAB_H:
 DB 0C0h, 0F9h, 0A4h, 0B0h, 099h, 092h, 082h, 0F8h, 080h, 098h
 
 TAB_AH: 
 DB 040h, 079h, 024h, 030h, 019h, 012h, 002h, 078h, 000h, 018h
-
-END
-
 ```
 ## Autores
 | Nome | NUSP |

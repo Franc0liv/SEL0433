@@ -114,7 +114,7 @@ end
 
 ### <ins>Checkpoint 3 – Contagem de voltas com o timer <ins>
 
-Para o terceiro *Checkpoint* desenvolvemos a lógica para contagem de eventos e atualização contínua do display utilizando o registrador TMOD e o temporizador TR1.
+Para o terceiro *Checkpoint* desenvolvemos a lógica para contagem de eventos e atualização contínua do display utilizando o registrador TMOD e o temporizador TR1. O código amplia o que foi realizado nos ultimos checkpoints, expandindo as funções de ciclo horário e ciclo anti-horário com rotinas de atualização do display de 7 e integrando tabelas distintas para os valores do display considerando o uso do ponto decimal para sinalizar o sentido de rotação. 
 
 ```assembly
 
@@ -181,6 +181,7 @@ END
 ```
 ## <ins>Entrega Final – Integração da mudança de direção <ins>
 
+Por fim, a entrega final 
 
 ```assembly
 

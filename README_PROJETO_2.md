@@ -283,6 +283,8 @@ void main() {
     }
 }
 ```
+<img width="618" height="440" alt="Circuito - Checkpoint 2" src="https://github.com/user-attachments/assets/acb40645-ff3a-45b4-9227-614e86a4e838" />
+
 
 
 ## <ins>Entrega Final – Seleção da Temperatura <ins>

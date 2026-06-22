@@ -283,81 +283,15 @@ void main() {
 
 ## <ins>Entrega Final – Seleção da Temperatura <ins>
 
-Por fim, a entrega final. Nela, implementamos, finalmente, a lógica de interrupção, que salva uma grande quantidade de ciclos de máquina. Nos checkpoints anteriores já era possível identificar que havia uma lógica de "fallback" (quando um rótulo é acionado e ao finalizar acaba caindo em outra subrotina), especialmente no caso Zerada e display, que sempre tinham que ser acionadas juntas e, portanto, não fazia sentido gastar 2 ciclos de máquina para acionar a subrotina de display que era a próxima no contador de programa (Program Counter) e depois ainda gastar mais 2 cilcos extras usando um segundo retorno (RET). Nesse caso, usamos essa mesma lógica na subrotina Display, que agora faz parte, da rotina de interrupção.\
-Nesse caso, a primeira coisa que fazemos é selecionar a Origem do nosso código em no endereço 0033h ao invés do 0000h que utilizavamos anteriormente. Fazemos isso justamente porque dos valores de 0000h a 00032h são os locais escolhidos previamente pelo fabricante para a rotinas de interrupçãoi pularem quando ativas. Assim para a interrupção do Timer 1, o endereço de memória é o 01Bh, então é nele que escrevemos nosso código. Primeiramente pegamos o valor armazenado no endereço de memória 055h (endereço arbitrário que escolhemos), Aumentamos em 1 o valor dele e depois usamos a instrução CJNE (*Compare and Jump if Not Equal*), que é uma instrução de 2 ciclos de máquina e 3 bytes de tamanho, que compara o valor de um registrador (nesse caso escolhemos o Acc), com um valor de memória ou valor arbitrário (nesse caso escolhemos o 051h, que armazena o valor máximo do contador) e se ele não for igual ele vai direto para a função Display. Nesse caso, Ele só não vai ser igual se o valor ainda for menor que 10, se ele estiver nisso, de fato a soma já foi feita e basta apresentar no display (0 funciona no primeiro ciclo pois tanto as funções horárias quanto antihorárias começam zerando o valor de 055h e depois chamam a subrotina de display para imprimir ele no 7 segmentos). Agora, se for 10, significa que o ciclo acabou e tudo que basta ser feito para retornar a normalidade é colocar o valor de 055h para reiniciar a contagem.\
-De resto a lógica toda é quase igual a anterior, salvo o fato de agora sim estarmos utilizando a função de reload do Modo 2 do contador interno do 8051. Assim, depois de colocar o TMOD como o modo 2 (01100000), basta carregar o valor que deve ser reabastecido no Byte inferior (TL1), com o valor do Byte superior (TH1). Como queremos que a cada flag de interrupção interna o contador atualize, colocamos esse valor de TH1 para ser #0FFh que é o último valor que o contador assume antes de levantar a flag e acionar a interrupção (que nesse caso está ativa no código, como podemos ver com o MOV IE, #88h). Fora isso o código continua igual ao anterior, exceto por uma pequena adição que não foi pedida no roteiro da prática, mas que é bem importante: Um botão de parada forçada do motor.\
-A utilidade para isso é variada, desde segurança até mesmo pausa para manutenção sem a necessidade de desligar todo o circuito. e para implementar essa subrotina é bem simples, se o operador ativar a SW0 ele coloca o motor em um estado de parada (representado pelo P no display de sete segmentos),para isso utilizando a instrução CPL no pino P3.1. Quando ele finalizar ele ele simplesmente desativa ela, dando outra instrução CPL no pino P3.1 e retornando ao estado habitual, na sequência analisando o bit do P3.1 do motor para saber de onde ele deverá voltar, zerando o contador no processo. 
+Por fim, na entrega final, integramos todos os módulos anteriores ao subsistema de conversão Analógico-Digital (ADC) para criar a lógica de aferição da temperatura. A medição no projeto simula as saídas do sensor LM35 na faixa de 0°C a 100°C usando um potenciômetro ligado aos pinos analógicos do PIC18F4550.
 
-```assembly
+O destaque para esta fase está na configuração dedicada do registrador ADCON1. Como o ADC do PIC tem resolução de 10 bits e o sensor LM35 fornece pequenas variações de tensão, utilizamos uma alimentação de referência externa de 1V ao invés dos convencionais 5V, refinando expressivamente a precisão de conversão. Após o ADC fazer a leitura, o valor processado é formatado para exibir 3 algarismos com ponto flutuante ("XX.X °C") no display sem de fato declarar variáveis float, buscando manter uma alta eficiência da memória do microcontrolador.
 
-SJMP Inicializacao
+Além disso, adicionamos um terceiro botão que atua como acionador geral de todo o processo simultâneo: ao ser disparado, ele liga a leitura contínua da temperatura e a contagem do tempo pré-selecionado (curta ou longa) pelos timers. Se a temperatura do sistema ultrapassar os 50°C, um LED foi configurado para acender em resposta, indicando que a resistência interna do forno está ativa.
 
-org 01Bh
-INC 055h
-MOV A, 055h
-CJNE A, 051h, Display
-MOV 055h, #0
-Display:
-MOV A, 55h
-MOVC A, @A+DPTR
-MOV P1, A    
-RETI
+```c
+Entrega Final Code
 
-ORG 0033h 
-
-Inicializacao:
-MOV 051h,#10 
-MOV IE,#88h
-CLR P3.4
-CLR P3.3
-MOV TMOD, #060H
-MOV TH1, #0FFh
-MOV TL1, TH1
-SETB TR1
-CLR P3.1
-
-CycHorario:
-MOV DPTR, #TAB_H
-MOV 055h, #0
-ACALL Display 
-Loop_Horario:
-JNB P2.7, Panic
-JNB P2.0,Reverso
-SJMP Loop_Horario
-
-CycAHorario:
-MOV DPTR, #TAB_AH
-MOV 055h, #0
-ACALL Display
-Loop_AHorario:
-JNB P2.7, Panic
-JB P2.0, Reverso
-SJMP Loop_AHorario
-
-Reverso:
-JNB P2.7, Panic
-CPL P3.1
-CPL P3.0
-Retorno:
-JNB P3.1, CycHorario
-SJMP CycAHorario
-
-Panic:
-CPL P3.1
-MOV P1, #10001100b
-Loop_Panic:
-JB P2.7, Panic_Finish
-SJMP Loop_Panic
-Panic_Finish:
-MOV P1, #0FFh
-CPL P3.1
-SJMP Retorno
-
-TAB_H:
-DB 0C0h, 0F9h, 0A4h, 0B0h, 099h, 092h, 082h, 0F8h, 080h, 098h
-
-TAB_AH: 
-DB 040h, 079h, 024h, 030h, 019h, 012h, 002h, 078h, 000h, 018h
 ```
 ## Autores
 | Nome | NUSP |

@@ -87,6 +87,10 @@ void main() {
 }
 ```
 
+<img width="423" height="364" alt="Circuito - Checkpoint 1" src="https://github.com/user-attachments/assets/f6abc80e-d822-4b97-918a-bcb5dd7eb76d" />
+
+
+
 
 ### <ins>Checkpoint 2 – Contagem de tempo utilizado Timers e interrupções no PIC <ins>
 

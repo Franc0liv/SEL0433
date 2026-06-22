@@ -364,5 +364,6 @@ DB 040h, 079h, 024h, 030h, 019h, 012h, 002h, 078h, 000h, 018h
 | --- | --- |
 |Raphael Franco de Oliveira	| 13862393|
 |Giulliano Olivato da Silva	| 9944204|
+|Guilherme Pereira Loredo   | 11885190|
 
 

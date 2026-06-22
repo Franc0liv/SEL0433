@@ -3,7 +3,7 @@
 ## Sobre o projeto
 
 O projeto visa projetar e implementar um dispositivo de aferição de temperatura e tempo para um forno industrial, utilizando um microcontrolador da família PIC18 (especificamente o modelo PIC18F4550). Esse sistema tem a finalidade de monitorar a temperatura interna de um forno em intervalos de tempo, uma funcionalidade aplicada em processos de fabricação metálica, pintura eletrostática e manipulação de componentes químicos.
-O funcionamento do sistema consiste em realizar a leitura da temperatura na faixa de 0°C a 100°C por meio de um sensor LM35 (emulado via potenciômetro) e exibir esse valor continuamente no display LCD. O dispositivo conta com botões para selecionar dinamicamente tempos predeterminados de medição (aferição de curta ou longa duração), exibindo a contagem regressiva correspondente. Além disso, o sistema dispõe de sinalização luminosa (LED) para simular o estado da resistência do forno em temperaturas elevadas e medidas de prevenção contra o efeito bouncing (repique) dos botões mecânicos. A implementação foi direcionada para a simulação no SimulIDE e execução na placa de desenvolvimento Kit EasyPIC v7.
+O funcionamento do sistema consiste em realizar a leitura da temperatura na faixa de 0°C a 100°C por meio de um sensor LM35 e exibir esse valor continuamente no display LCD. O dispositivo conta com botões para selecionar tempos predeterminados de medição, entre aferição de curta ou longa duração, exibindo a contagem regressiva correspondente. Além disso, o projeto faz uso de sinalização luminosa via LEDs para simular o estado da resistência do forno em temperaturas elevadas e medidas de prevenção contra o efeito bouncing dos botões mecânicos. A implementação foi realizada via para a simulação no ambiente SimulIDE e execução na placa de desenvolvimento Kit EasyPIC v7.
 ## Objetivos
 
 Os principais objetivos para esse projeto são:
@@ -15,176 +15,273 @@ Os principais objetivos para esse projeto são:
 
 ### <ins>Checkpoint 1 – Tratamento do efeito bouncing e acionamento do display LCD<ins>
 
-Para o primeiro Checkpoint, o foco principal foi o acionamento do display LCD e o tratamento via software do efeito bouncing (repique). O bouncing é um problema comum em chaves mecânicas, fazendo com que o microcontrolador interprete erroneamente múltiplos acionamentos elétricos ao invés de apenas um.
+Para o primeiro *Checkpoint*, o foco principal foi o acionamento do display LCD e o tratamento via software do efeito bouncing (repique). O bouncing é um problema comum em chaves mecânicas, fazendo com que o microcontrolador interprete erroneamente múltiplos acionamentos elétricos ao invés de apenas um.
 
-O desenvolvimento consistiu na criação de um firmware que exibe a frase "HelloWrld" na primeira linha de um display LCD operando em interface de comunicação de 4 bits. Na segunda linha, foi estruturado um contador de ciclo único de 0 a 9 que é incrementado toda vez que o botão é pressionado. Utilizamos uma flag auxiliar de software e detecção por borda de subida para garantir que o repique dos contatos metálicos do botão fosse totalmente filtrado pelo código, proporcionando uma leitura limpa.
+O desenvolvimento consistiu na criação de um firmware que exibe a frase **"HelloWrld"** na primeira linha de um display LCD operando como uma interface de comunicação de 4 bits. Na segunda linha, foi estruturado um contador de ciclo único de 0 a 9 que é incrementado toda vez que o botão é pressionado. Utilizamos uma flag auxiliar de software e detecção por borda de subida para garantir que o repique dos contatos metálicos do botão fosse totalmente filtrado pelo código, proporcionando uma leitura limpa.
 
-ORG 0000H
+```c
+sbit LCD_RS at RB4_bit;
+sbit LCD_EN at RB5_bit;
+sbit LCD_D4 at RB0_bit;
+sbit LCD_D5 at RB1_bit;
+sbit LCD_D6 at RB2_bit;
+sbit LCD_D7 at RB3_bit;
 
-MAIN:
-    MOV DPTR, #TAB
+sbit LCD_RS_Direction at TRISB4_bit;
+sbit LCD_EN_Direction at TRISB5_bit;
+sbit LCD_D4_Direction at TRISB0_bit;
+sbit LCD_D5_Direction at TRISB1_bit;
+sbit LCD_D6_Direction at TRISB2_bit;
+sbit LCD_D7_Direction at TRISB3_bit;
 
-LOOP:
-    MOV A, P0  
-    JNB P2.0, CH0  
-    JNB P2.1, CH1
-    JNB P2.2, CH2
-    JNB P2.3, CH3
-    JNB P2.4, CH4
-    JNB P2.5, CH5
-    JNB P2.6, CH6
-    JNB P2.7, CH7
-	SJMP Apagar
-    SJMP LOOP  
+sbit BOTAO at RD0_bit;
+sbit BOTAO_Direction at TRISD0_bit;
 
-CH0:
-    MOV A, #0
-    SJMP DISPLAY
+unsigned short contador = 0;
+unsigned short botao_flag = 0;
+char digito[2];
 
-CH1:
-    MOV A, #1
-    SJMP DISPLAY
+void atualiza_lcd() {
+    digito[0] = contador + '0';
+    digito[1] = '\0';
 
-CH2:
-    MOV A, #2
-    SJMP DISPLAY
-CH3:
-    MOV A, #3
-    SJMP DISPLAY
+    Lcd_Out(1, 1, "HelloWrld");
+    Lcd_Out(2, 1, "Contador: ");
+    Lcd_Out(2, 11, digito);
+}
 
-CH4:
-    MOV A, #4
-    SJMP DISPLAY
+void main() {
+    ADCON1 = 0x0F;
+    CMCON = 0x07;
 
-CH5:
-    MOV A, #5
-    SJMP DISPLAY
-CH6:
-    MOV A, #6
-    SJMP DISPLAY
+    TRISB = 0x00;
+    BOTAO_Direction = 1;
 
-CH7:
-    MOV A, #7
-	SJMP DISPLAY
+    Lcd_Init();
+    Lcd_Cmd(_LCD_CLEAR);
+    Lcd_Cmd(_LCD_CURSOR_OFF);
 
-Apagar:
-	MOV A, #10
+    atualiza_lcd();
 
-DISPLAY:
-    MOVC A, @A+DPTR   
-    MOV P1, A         
-    SJMP LOOP
+    while(1) {
+        if (BOTAO == 1 && botao_flag == 0) {
+            Delay_ms(30);
 
-TAB:
-DB 0C0h, 0F9h, 0A4h, 0B0h, 099h, 092h, 082h, 0F8h, 080h, 098h, 0FFh
+            if (BOTAO == 1) {
+                botao_flag = 1;
 
-END
+                contador++;
+
+                if (contador > 9) {
+                    contador = 0;
+                }
+
+                atualiza_lcd();
+            }
+        }
+
+        if (BOTAO == 0) {
+            botao_flag = 0;
+        }
+    }
+}
 ```
 
 
-### <ins>Checkpoint 2 – Controle da direção do motor <ins>
+### <ins>Checkpoint 2 – Contagem de tempo utilizado Timers e interrupções no PIC <ins>
 
-Para o segundo *Checkpoint* desenvolvemos a lógica do controle de direção do motor DC através de uma chave, nela temos que controle do sentido de rotação é dado pela porta P2.0. Foi feita uma subrotina *Pivo* (em referẽncia aos jogadores pivô do basquete, peça central em grande parte das estratégias) que verifica constantemente a mundaça de direção do giro através do loop das funções de ciclo horário e ciclo anti-horário.\
-Aqui, vale ressaltar a principal diferença entre o que o material original da disciplina pedia e o que foi implementado deste cgeckpoint até o código final: A manipulação e checagem direta do pino P3.1 para determinar o sentido de rotação do motor. Durante a criação do código observamos que a criação de uma subrotina que servia estritamente para comparar o valor salvo na Flag 0 (F0) do registrador PSW era desnecessário. Isso porque a informação apresentada no Edsim 51 sobre o funcionamento da ponte H que controla a direção de rotação do motor: Se ele está em P3.1 = 0 e P3.0 = 0 o motor está parado. Em P3.1 = 0 P3.0 = 1 ele está rotacionando em sentido horário. Em P3.1 = 1 P3.0 = 0 ele está rotacionando em sentido antihorário. Em P3.1 = 1 P3.0 = 1  ele também está parado.\
-Assim, note que no Edsim51 o estado inicial dos motores é sempre 1 e 1, então o que fazemos é iniciar o motor simplesmente escolhendo qual deles vamor querer que ele inicie. Como o estado normal é dado pela rotação no sentido horário iniciamos ele dando uma instrução de Clear na porta P3.1, e depois basta fazer pooling no estado da chave SW0 (P2.0) para ver se ele mudou de direção. Se ele mudou de direção Chamamos a função Reverso que simplesmente joga uma instrução de Complementary (CPL) nas duas portas. Como ela não faz a movimentação nas duas portas ao mesmo tempo, ela para o motor e só depois, quase instântaneamente, inverte a rotação, já que os dois estados de rotação da ponte H são complementares (invertidos). 
+Para o segundo *Checkpoint*, desenvolvemos a base de temporização para o contador regressivo. Nesta etapa, implementamos a manipulação de dois timers em conjunto com interrupções externas acionadas por dois botões push buttons distintos.
 
-```assembly
-Org 0000h
-clr P3.1 
- 
-CycHorario:  
-JNB P2.0,Pivo 
-SJMP CycHorario
+A lógica aplicada integra o microcontrolador operando com um cristal oscilador de 8 MHz. Utilizamos o temporizador TMR0 configurado com interrupção externa para ser a base de tempo do intervalo de contagem de longa duração (que dura 60 segundos com precisão na casa de 1 segundo). Simultaneamente, o temporizador TMR1 foi configurado para gerenciar o intervalo de curta duração (10 segundos, com base de 250 milissegundos). Todos os dados processados na contagem regressiva passaram a ser enviados para exibição em uma das linhas do display LCD inicializado no checkpoint anterior, consolidando a rotina principal focada em eventos.
 
-CycAHorario:
-JB P2.0, Pivo
-SJMP CycAHorario
+```c
+sbit LCD_RS at RB4_bit;
+sbit LCD_EN at RB5_bit;
+sbit LCD_D4 at RB0_bit;
+sbit LCD_D5 at RB1_bit;
+sbit LCD_D6 at RB2_bit;
+sbit LCD_D7 at RB3_bit;
 
-Pivo:
-Acall Reverso
-JNB P3.1, CycHorario
-SJMP CycAHorario
+sbit LCD_RS_Direction at TRISB4_bit;
+sbit LCD_EN_Direction at TRISB5_bit;
+sbit LCD_D4_Direction at TRISB0_bit;
+sbit LCD_D5_Direction at TRISB1_bit;
+sbit LCD_D6_Direction at TRISB2_bit;
+sbit LCD_D7_Direction at TRISB3_bit;
 
-Reverso:
-CPL P3.1
-CPL P3.0
-RET
-end
+sbit BOTAO_60 at RD0_bit;
+sbit BOTAO_10 at RD1_bit;
+
+unsigned short tempo = 0;
+unsigned short modo = 0; 
+unsigned short rodando = 0;
+unsigned short atualiza = 1;
+
+unsigned short ticks_tmr1 = 0; 
+
+char estado_b0 = 0;
+char estado_b1 = 0;
+
+void mostra_lcd() {
+    char txt[4];
+
+    txt[0] = (tempo / 10) + '0';
+    txt[1] = (tempo % 10) + '0';
+    txt[2] = '\0';
+    
+    if (modo == 1) 
+    {
+        Lcd_Out(1, 1, "Modo: 60s       ");
+        Lcd_Out(2, 1, "Tempo: ");
+        Lcd_Out(2, 8, txt);
+        Lcd_Out(2, 10, "s       "); 
+    } 
+    
+    else if (modo == 2)
+    {
+        Lcd_Out(1, 1, "Modo: 10s       ");
+        Lcd_Out(2, 1, "Tempo: ");
+        Lcd_Out(2, 8, txt);
+        Lcd_Out(2, 10, "s       "); 
+    } 
+    
+    else
+    {
+        Lcd_Out(1, 1, "Aperte um botao");
+        Lcd_Out(2, 1, "para iniciar...");
+    }
+
+
+}
+
+void inicia_60s() {
+    tempo = 60;
+    modo = 1;
+    rodando = 1;
+    T1CON.TMR1ON = 0; 
+    TMR0H = 0xC2;
+    TMR0L = 0xF7;
+    INTCON.TMR0IF = 0;
+    T0CON.TMR0ON = 1;
+    atualiza = 1;
+}
+
+void inicia_10s() {
+    tempo = 10;
+    modo = 2;
+    rodando = 1;
+    ticks_tmr1 = 0;
+
+    T0CON.TMR0ON = 0; 
+    TMR1H = 0x0B;
+    TMR1L = 0xDC;
+
+    PIR1.TMR1IF = 0;
+    T1CON.TMR1ON = 1;
+
+    atualiza = 1;
+}
+
+void interrupt() {
+    if (INTCON.TMR0IF) {
+        TMR0H = 0xC2;
+        TMR0L = 0xF7;
+        INTCON.TMR0IF = 0;
+
+        if (rodando && tempo > 0) {
+            tempo--;
+            atualiza = 1;
+
+            if (tempo == 0) {
+                rodando = 0;
+                T0CON.TMR0ON = 0;
+            }
+        }
+    }
+
+    if (PIR1.TMR1IF) {
+        TMR1H = 0x0B;
+        TMR1L = 0xDC;
+        PIR1.TMR1IF = 0;
+
+        if (rodando && tempo > 0) {
+            ticks_tmr1++;
+
+            if (ticks_tmr1 >= 4) {
+                ticks_tmr1 = 0;
+                tempo--;
+                atualiza = 1;
+
+                if (tempo == 0) {
+                    rodando = 0;
+                    T1CON.TMR1ON = 0;
+                }
+            }
+        }
+    }
+}
+
+void main() {
+    ADCON1 = 0x0F; 
+    CMCON = 0x07;  
+
+    TRISB = 0x00; 
+
+    TRISD0_bit = 1; 
+    TRISD1_bit = 1; 
+
+    Lcd_Init();
+    Lcd_Cmd(_LCD_CLEAR);
+    Lcd_Cmd(_LCD_CURSOR_OFF);
+    
+  
+    
+    T0CON = 0b00000110;
+    INTCON.TMR0IE = 1;
+    INTCON.TMR0IF = 0;
+    
+  
+    
+    T1CON = 0b10110000;
+    PIE1.TMR1IE = 1;
+    PIR1.TMR1IF = 0;
+
+    INTCON.PEIE = 1; 
+    INTCON.GIE = 1; 
+
+    mostra_lcd();
+
+    while (1) {
+        if (BOTAO_60 == 1 && estado_b0 == 0) {
+            Delay_ms(30);
+            if (BOTAO_60 == 1) {
+                estado_b0 = 1;
+                inicia_60s();
+            }
+        } else if (BOTAO_60 == 0) {
+            estado_b0 = 0;
+        }
+
+        if (BOTAO_10 == 1 && estado_b1 == 0) {
+            Delay_ms(30);
+            if (BOTAO_10 == 1) {
+                estado_b1 = 1;
+                inicia_10s();
+            }
+        } else if (BOTAO_10 == 0) {
+            estado_b1 = 0;
+        }
+
+        if (atualiza) {
+            atualiza = 0;
+            mostra_lcd();
+        }
+    }
+}
 ```
 
-### <ins>Checkpoint 3 – Contagem de voltas com o timer <ins>
 
-Para o terceiro *Checkpoint* desenvolvemos a lógica para contagem de eventos e atualização contínua do display utilizando o registrador TMOD e o temporizador TR1. O código amplia o que foi realizado nos ultimos checkpoints, expandindo as funções de ciclo horário e ciclo anti-horário com rotinas de atualização do display de 7 segmentos e integrando tabelas distintas para os valores do display considerando o uso do ponto decimal para sinalizar o sentido de rotação.\
-O que vale ressaltar desse código abaixo é que ele funciona inteiramente sem utilizar interrupções e é uma versão menos otimizada do código final. Isto é, a flag T1 está sendo utilizada, mas ela ainda não está forçando a interrupção no sistema, o que obriga ele a fazer pooling constante no Display para atualizar o valor do contador.\
-No caso, mesmo aqui, já são implementadas lógicas análogas a do código final, como por exemplo um registrador (ou um endereço de memória) ser o responsável por controlar o valor máximo do contador, e a tabela TAB_AH. A tabela, foi craida após um teste simples, diminuindo a velocidade do clock emulado no Edsim51 para 1 MHz (Aproximadamente 10% do valor normal de 12 MHz). Quando este teste foi feito e a frequẽncia de atualização foi colocada em 1 e foi possível começar a ver o LED do ponto decimal piscar, uma vez que para toda vez que a função display era chamada no caso Anti Horário era necessário gastar 1 ciclo de máquina adicional só para adicionar o ponto.\
-Como o código estava enxuto e havia espaço de memória em abundância disponível, optamos por adicionar a descrição da segunda tabela com o ponto decimal adicional previamente, que permitia que mesmo em casos extremos de baixíssima frequência de clock no oscilador o ponto decimal pudesse ser visto de maneira constante. De quebra, por ele não ficar apagando e acendendo o segmento do ponto decimal isso deve aumentar o tempo de vida útil de um display 7 segmentos da vida real além de economizar uma quantia de ciclos de máquina igual ao número de vezes que o contador era acionado para adicionar o display (isto é, para 10 atualizações, 10 ciclos de máquina seriam poupados só por ter colocado os valores previamente em uma tabela alternativa).   
-
-```assembly
-
-ORG 0000H 
-
-CLR P3.4 
-CLR P3.3
-
-MOV TMOD, #060H  
-MOV R0, #0F6H
-MOV TL1, R0
-SETB TR1
-
-CLR P3.1
-
-CycHorario:
-MOV DPTR, #TAB_H
-Loop_Horario:
-JB TF1, Overflow
-JNB P2.0,reverso
-ACALL Display
-SJMP Loop_Horario
-
-CycAHorario:
-MOV DPTR, #TAB_AH
-Loop_AHorario:
-JB TF1, Overflow
-JB P2.0, reverso
-ACALL Display
-SJMP Loop_AHorario
-
-Overflow: 
-CLR TF1
-ACALL Zerada
-SJMP Retorno
-
-Reverso:
-CPL P3.1
-CPL P3.0
-ACALL Zerada
-
-Retorno:
-JNB P3.1, CycHorario
-SJMP CycAHorario
-
-Zerada:
-MOV TL1, R0 
-
-DISPLAY:
-MOV A,TL1
-SUBB A, R0
-MOVC A, @A+DPTR   
-MOV P1, A         
-RET
-
-TAB_H:
-DB 0C0h, 0F9h, 0A4h, 0B0h, 099h, 092h, 082h, 0F8h, 080h, 098h  
-
-TAB_AH: 
-DB 040h, 079h, 024h, 030h, 019h, 012h, 002h, 078h, 000h, 018h  
-
-END
-
-```
-
-
-## <ins>Entrega Final – Integração da mudança de direção <ins>
+## <ins>Entrega Final – Seleção da Temperatura <ins>
 
 Por fim, a entrega final. Nela, implementamos, finalmente, a lógica de interrupção, que salva uma grande quantidade de ciclos de máquina. Nos checkpoints anteriores já era possível identificar que havia uma lógica de "fallback" (quando um rótulo é acionado e ao finalizar acaba caindo em outra subrotina), especialmente no caso Zerada e display, que sempre tinham que ser acionadas juntas e, portanto, não fazia sentido gastar 2 ciclos de máquina para acionar a subrotina de display que era a próxima no contador de programa (Program Counter) e depois ainda gastar mais 2 cilcos extras usando um segundo retorno (RET). Nesse caso, usamos essa mesma lógica na subrotina Display, que agora faz parte, da rotina de interrupção.\
 Nesse caso, a primeira coisa que fazemos é selecionar a Origem do nosso código em no endereço 0033h ao invés do 0000h que utilizavamos anteriormente. Fazemos isso justamente porque dos valores de 0000h a 00032h são os locais escolhidos previamente pelo fabricante para a rotinas de interrupçãoi pularem quando ativas. Assim para a interrupção do Timer 1, o endereço de memória é o 01Bh, então é nele que escrevemos nosso código. Primeiramente pegamos o valor armazenado no endereço de memória 055h (endereço arbitrário que escolhemos), Aumentamos em 1 o valor dele e depois usamos a instrução CJNE (*Compare and Jump if Not Equal*), que é uma instrução de 2 ciclos de máquina e 3 bytes de tamanho, que compara o valor de um registrador (nesse caso escolhemos o Acc), com um valor de memória ou valor arbitrário (nesse caso escolhemos o 051h, que armazena o valor máximo do contador) e se ele não for igual ele vai direto para a função Display. Nesse caso, Ele só não vai ser igual se o valor ainda for menor que 10, se ele estiver nisso, de fato a soma já foi feita e basta apresentar no display (0 funciona no primeiro ciclo pois tanto as funções horárias quanto antihorárias começam zerando o valor de 055h e depois chamam a subrotina de display para imprimir ele no 7 segmentos). Agora, se for 10, significa que o ciclo acabou e tudo que basta ser feito para retornar a normalidade é colocar o valor de 055h para reiniciar a contagem.\

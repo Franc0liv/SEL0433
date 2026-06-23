@@ -294,7 +294,7 @@ O destaque para esta fase está na configuração dedicada do registrador ADCON1
 
 Além disso, mudamos um pouco a funcionalidade dos 2 botões implementados no checkpoint2. agora, ao invés de cada um dos botões servir para escolher um modo de contagem regressiva diferente, um deles, atua como acionador geral de todo o processo simultâneo, ou seja, quando é acionado, ele liga a contagem selecionada. Já o segundo botão alterna entre os dois modos de contagem existentes (curta, de 10 segundos e longa de 60 segundo). Se a temperatura do sistema ultrapassar os 50°C, um LED foi configurado para acender em resposta, indicando que a resistência interna do forno está ativa. Normalmente colocariamos a resistência conectada a esse LED em 330 ohms para reduzir sua luminância a um nível aceitável e aumentar o tempo de vida do diodo. No entanto, ao fazer isso no Simulide o LED fica muito apagado. Dessa forma, para poder gerar a imagem do circuito de maneira mais lúdica utilizamos o resistor com valor de 100 ohms, que deixa a cor amarela do LED bem mais destacada.
 
-Segue abaixo o código completo implementado no MikroC para a realização desse projeto. Os arquivos de simulação do Simulide, o código Hex colocado no PIC 18f4550 do simulador e o Código C, junto com um documento completo desse projeto podem ser encontrados em https://github.com/Franc0liv/SEL0433/Projeto_2/Misc
+Segue abaixo o código completo implementado no MikroC para a realização desse projeto. Os arquivos de simulação do Simulide, o código Hex colocado no PIC 18f4550 do simulador e o Código C, junto com um documento completo desse projeto podem ser encontrados em: https://github.com/Franc0liv/SEL0433/tree/main/Projeto_2/Misc
 
 ```c
 // Conexões do Módulo LCD

@@ -290,12 +290,13 @@ void main() {
 
 Por fim, na entrega final, integramos todos os módulos anteriores ao subsistema de conversão Analógico-Digital (ADC) para criar a lógica de aferição da temperatura. A medição no projeto simula as saídas do sensor LM35 na faixa de 0°C a 100°C usando um potenciômetro ligado aos pinos analógicos do PIC18F4550.
 
-O destaque para esta fase está na configuração dedicada do registrador ADCON1. Como o ADC do PIC tem resolução de 10 bits e o sensor LM35 fornece pequenas variações de tensão, utilizamos uma alimentação de referência externa de 1V ao invés dos convencionais 5V, refinando expressivamente a precisão de conversão. Após o ADC fazer a leitura, o valor processado é formatado para exibir 3 algarismos com ponto flutuante ("XX.X °C") no display sem de fato declarar variáveis float, buscando manter uma alta eficiência da memória do microcontrolador.
+O destaque para esta fase está na configuração dedicada do registrador ADCON1. Como o ADC do PIC tem resolução de 10 bits e o sensor LM35 fornece pequenas variações de tensão, utilizamos uma alimentação de referência externa de 1V ao invés dos convencionais 5V na porta AN3 (RA3) e essa mesma alimentação de 1V para o potenciômetro, o que permitiu mantar a faixa de tensão máxima do potênciometro entre 0V e 1 V, o que aumentou a precisão da simulação do LM35. Após o ADC fazer a leitura, o valor processado é formatado para exibir 3 algarismos com 1 casa decimal no display ("XX.X °C") porém, ao invés do valor armazenado no código ser de fato um número de ponto flutuante (float) ele é um número inteiro, o que dificulta um pouco a implementação do circuito, porém reduz o uso de memória.
 
-Além disso, adicionamos um terceiro botão que atua como acionador geral de todo o processo simultâneo: ao ser disparado, ele liga a leitura contínua da temperatura e a contagem do tempo pré-selecionado (curta ou longa) pelos timers. Se a temperatura do sistema ultrapassar os 50°C, um LED foi configurado para acender em resposta, indicando que a resistência interna do forno está ativa.
+Além disso, mudamos um pouco a funcionalidade dos 2 botões implementados no checkpoint2. agora, ao invés de cada um dos botões servir para escolher um modo de contagem regressiva diferente, um deles, atua como acionador geral de todo o processo simultâneo, ou seja, quando é acionado, ele liga a contagem selecionada. Já o segundo botão alterna entre os dois modos de contagem existentes (curta, de 10 segundos e longa de 60 segundo). Se a temperatura do sistema ultrapassar os 50°C, um LED foi configurado para acender em resposta, indicando que a resistência interna do forno está ativa. Normalmente colocariamos a resistência conectada a esse LED em 330 ohms para reduzir sua luminância a um nível aceitável e aumentar o tempo de vida do diodo. No entanto, ao fazer isso no Simulide o LED fica muito apagado. Dessa forma, para poder gerar a imagem do circuito de maneira mais lúdica utilizamos o resistor com valor de 100 ohms, que deixa a cor amarela do LED bem mais destacada.
+
+Segue abaixo o código completo implementado no MikroC para a realização desse projeto. Os arquivos de simulação do Simulide, o código Hex colocado no PIC 18f4550 do simulador e o Código C, junto com um documento completo desse projeto podem ser encontrados em https://github.com/Franc0liv/SEL0433/Projeto_2/Misc
 
 ```c
-Entrega Final Code:
 // Conexões do Módulo LCD
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
@@ -440,15 +441,15 @@ void mostra_lcd() {
 
 
 void main() {
-     // 1º Passo: Inicializa o módulo ADC do MikroC primeiro
-    // Isso evita que a biblioteca sobrescreva nosso ADCON1 depois
+     // Inicializamos o módulo ADC do MikroC primeiro para não dar problema
+    // Isso é: Evita que a biblioteca sobrescreva o ADCON1 depois
     ADC_Init();
 
-    // 2º Passo: Configura o ADCON1 APÓS a biblioteca ter sido iniciada
+    // Daí sim configuramos o ADCON1 apenas após a biblioteca ter sido iniciada
     // VCFG1 (bit 5): 0 (VSS como Vref-)
     // VCFG0 (bit 4): 1 (AN3/RA3 como Vref+ de 1V)
-    // PCFG (bits 3 a 0): 1100 (AN0, AN1, AN2 analógicos)
-    ADCON1 = 0x1C;
+    // PCFG (bits 3 a 0): 1011 (AN0, AN1, AN2 e AN3 como analógicos)
+    ADCON1 = 0x1B;
 
     CMCON = 0x07; // Desliga comparadores
 
@@ -544,10 +545,8 @@ void main() {
         Delay_ms(20); // Pequeno atraso para manter estabilidade do loop
     }
 }
-
 ```
-<img width="679" height="404" alt="image" src="https://github.com/user-attachments/assets/1a5cbbb1-6e62-4376-af09-38031aa09995" />
-
+<img width="968" height="616" alt="WhatsApp Image 2026-06-23 at 00 08 55" src="https://github.com/user-attachments/assets/77a5fdcd-ef73-4ea4-9362-2031314e2973" />
 
 ## Autores
 | Nome | NUSP |

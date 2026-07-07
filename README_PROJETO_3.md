@@ -79,8 +79,7 @@ bool configurePWM()
 {
 #if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
 
-  // Arduino ESP32 versao 3.x
-  bool redConfigured = ledcAttach(
+    bool redConfigured = ledcAttach(
     PIN_RED,
     PWM_FREQUENCY,
     PWM_RESOLUTION

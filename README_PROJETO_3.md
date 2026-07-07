@@ -464,7 +464,6 @@ const uint8_t OLED_ADDR = 0x3C;
 const int ADC_MIN = 0;
 const int ADC_MAX = 4095;
 
-//-
 const int ANGLE_MIN = 0;
 const int ANGLE_MAX = 180;
 
@@ -477,7 +476,6 @@ const int SERVO_PERIOD_US = 20000;
 
 const uint32_t PWM_MAX_DUTY = 65535;
 
-// Canal usado apenas em Arduino ESP32 2.x
 const int SERVO_CHANNEL = 0;
 
 
@@ -539,9 +537,6 @@ const uint8_t glyphSpace[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 const uint8_t glyphColon[5] = {0x00, 0x36, 0x36, 0x00, 0x00};
 const uint8_t glyphPercent[5] = {0x63, 0x13, 0x08, 0x64, 0x63};
 
-// -----------------------------------------------------------------------------
-// Funcoes do OLED
-// -----------------------------------------------------------------------------
 void oledCommand(uint8_t command)
 {
   Wire.beginTransmission(OLED_ADDR);

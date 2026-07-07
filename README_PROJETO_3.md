@@ -392,18 +392,12 @@ void main() {
     Lcd_Cmd(_LCD_CLEAR);
     Lcd_Cmd(_LCD_CURSOR_OFF);
     
-  
-    
     T0CON = 0b00000110;
     INTCON.TMR0IE = 1;
     INTCON.TMR0IF = 0;
-    
-  
-    
     T1CON = 0b10110000;
     PIE1.TMR1IE = 1;
     PIR1.TMR1IF = 0;
-
     INTCON.PEIE = 1; 
     INTCON.GIE = 1; 
 

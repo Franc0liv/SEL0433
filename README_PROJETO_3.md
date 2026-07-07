@@ -245,7 +245,7 @@ void loop()
 }
 ```
 
-<img width="423" height="364" alt="Circuito - Checkpoint 1" src="https://github.com/user-attachments/assets/f6abc80e-d822-4b97-918a-bcb5dd7eb76d" />
+<img width="423" height="364" alt="Circuito - Checkpoint 1" src="https://github.com/Franc0liv/SEL0433/blob/main/Projeto3_Misc/gif_esp32_proj3.gif" />
 
 
 

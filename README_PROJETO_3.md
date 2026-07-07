@@ -26,17 +26,14 @@ Durante toda a operação, os valores de duty cycle e os incrementos aplicados s
 #include <esp_arduino_version.h>
 #endif
 
-// Pinos do LED RGB
 const int PIN_RED = 25;
 const int PIN_GREEN = 26;
 const int PIN_BLUE = 27;
 
-// Configuracao do PWM
 const int PWM_FREQUENCY = 5000;
 const int PWM_RESOLUTION = 8;
 const int PWM_MAX_DUTY = 255;
 
-// Incrementos de cada cor
 const int RED_STEP = 15;
 const int GREEN_STEP = 5;
 const int BLUE_STEP = 10;
@@ -45,7 +42,6 @@ const int CHANNEL_RED = 0;
 const int CHANNEL_GREEN = 1;
 const int CHANNEL_BLUE = 2;
 
-// Valores atuais das cores em porcentagem
 int redPercent = 0;
 int greenPercent = 0;
 int bluePercent = 0;
@@ -201,7 +197,7 @@ void setup()
 
 void loop()
 {
-  // Atualiza o brilho das tres cores
+ 
   setRGB(
     redPercent,
     greenPercent,
